@@ -29,6 +29,7 @@ class Plugin {
 		$services['code']     = new Code( $services['settings'] );
 
 		$services['redirection'] = new Redirection\Loader;
+		$services['breadcrumbs'] = new Breadcrumbs;
 
 		// Admin only.
 		if ( is_admin() ) {
@@ -54,7 +55,6 @@ class Plugin {
 		$services['rel_links']     = new MetaTags\RelLinks;
 		$services['open_graph']    = new MetaTags\OpenGraph( $services['meta_title'], $services['meta_description'], $services['canonical_url'] );
 		$services['twitter_cards'] = new MetaTags\TwitterCards;
-		$services['breadcrumbs']   = new Breadcrumbs;
 		$services['feed']          = new Feed;
 
 		$services['schema'] = new Schema\Manager( $services['meta_title'], $services['meta_description'], $services['breadcrumbs'] );
@@ -92,6 +92,14 @@ class Plugin {
 			if ( $settings->is_feature_active( $id ) ) {
 				$service->setup();
 			}
+		}
+
+		if ( is_admin() ) {
+			new Dashboard( 'https://feeds.feedburner.com/slimseo', 'https://wpslimseo.com/', [
+				'title'           => 'Slim SEO',
+				'dismiss_tooltip' => esc_html__( 'Dismiss all Slim SEO news', 'slim-seo' ),
+				'dismiss_confirm' => esc_html__( 'Are you sure to dismiss all Slim SEO news?', 'slim-seo' ),
+			] );
 		}
 	}
 

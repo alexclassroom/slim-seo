@@ -1,11 +1,11 @@
 === Slim SEO - Fast & Automated WordPress SEO Plugin ===
 Contributors: elightup, rilwis, hungviet91, barcavn2
-Donate link: https://wpslimseo.com/pro/
+Donate link: https://wpslimseo.com/products/
 Tags: seo, search engine optimization, schema, sitemap, google, facebook, twitter, meta tags, meta description, open graph, twitter card, xml sitemap
 Requires at least: 5.7
-Tested up to: 6.1.1
+Tested up to: 6.2
 Requires PHP: 7.1
-Stable tag: 3.18.0
+Stable tag: 3.20.0
 License: GPL v3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -148,12 +148,44 @@ The sitemap URL is located at `domain.com/sitemap.xml`.
 
 == Changelog ==
 
+= 3.20.0 - 2023-04-20 =
+- Add user sitemap
+- Add breadcrumbs block, useful to be used with the Full Site Editor
+- Add Pinterest rich pins for WooCommerce
+- Improve Bricks + WPGB integration, ignore elements with query loop
+- Exclude Bricks templates from the sitemap
+- Skip rendering some blocks for meta description & Open Graph, which cause custom CSS issue with FluentForms
+- Fix migrating from AIO SEO plugin, due to its recent changed
+- Fix redirect not working with mailto: link
+- Fix compatibility with Auto Listings & LifterLMS
+
+= 3.19.1 - 2023-04-14 =
+- Exclude external images from the sitemap
+- Fix Bricks dynamic tags not rendering
+- Fix clicking on canonical field focusing on title field
+
+= 3.19.0 - 2023-04-04 =
+- Add canonical URL
+- If a page is set as the post type archive, get the page title for the breadcrumbs
+- Make breadcrumbs include product categories for WooCommerce
+- Fix rel link for the 1st page containing /page/1
+
+= 3.18.2 - 2023-03-21 =
+- Add type safe for checking terms in breadcrumbs
+- Fix regex redirection causing PHP warnings
+- Fix link attributes in WP 6.0
+
+= 3.18.1 - 2023-02-22 =
+
+- Make plugin name clear for translators (#76). Credit Alex Lion (@alexclassroom).
+- Fix PHP warning for the Google Web Stories integration
+- Fix wrong reference to plugin's service list
+- Fix breadcrumbs on pages with other queries
+
 = 3.18.0 - 2023-02-17 =
 
-[View blog post](https://wpslimseo.com/slim-seo-3-18/)
-
 - Increase min required PHP version to 7.1
-- Add rel nofollow, sponsored and ugc to links. Works for both classic and block editors.
+- Add [rel nofollow, sponsored and ugc to links](https://wpslimseo.com/slim-seo-3-18/). Works for both classic and block editors.
 - Add integration for Ultimate Member
 - Improve integration for WooCommerce
 - If a page is set as the post type archive, get SEO settings from that page
@@ -206,7 +238,8 @@ The sitemap URL is located at `domain.com/sitemap.xml`.
 - Fix admin columns not available for post types created late
 
 = 3.16.0 - 2022-11-10 =
-- Add redirection and 404 link monitoring. See [blog post](https://wpslimseo.com/slim-seo-3-16/).
+
+- Add [redirection and 404 link monitoring](https://wpslimseo.com/slim-seo-3-16/).
 - Improve compatibility for Divi.
 
 = 3.15.2 - 2022-09-22 =

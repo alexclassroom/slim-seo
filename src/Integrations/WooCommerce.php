@@ -2,7 +2,14 @@
 namespace SlimSEO\Integrations;
 
 class WooCommerce {
-	private $shop_page_id;
+	private $tags = [
+		'product:price:amount',
+		'product:price:currency',
+		'og:price:standard_amount',
+		'og:availability',
+		'og:type',
+	];
+	private $product;
 
 	public function setup() {
 		add_action( 'template_redirect', [ $this, 'process' ] );
@@ -13,15 +20,17 @@ class WooCommerce {
 			return;
 		}
 
+		add_filter( 'slim_seo_breadcrumbs_args', [ $this, 'change_breadcrumbs_taxonomy' ] );
 		add_filter( 'slim_seo_meta_description', [ $this, 'strip_shortcodes' ] );
 
-		if ( ! is_shop() ) {
-			return;
+		if ( is_singular( 'product' ) ) {
+			$this->add_pinterest_pins();
 		}
+	}
 
-		$this->shop_page_id = (int) wc_get_page_id( 'shop' );
-
-		add_filter( 'post_type_archive_title', [ $this, 'set_page_title_as_archive_title' ] );
+	public function change_breadcrumbs_taxonomy( array $args ): array {
+		$args['taxonomy'] = 'product_cat';
+		return $args;
 	}
 
 	/**
@@ -40,7 +49,52 @@ class WooCommerce {
 		return is_page( $pages );
 	}
 
-	public function set_page_title_as_archive_title(): string {
-		return get_the_title( $this->shop_page_id );
+	private function add_pinterest_pins() {
+		$this->product = wc_get_product( get_queried_object() );
+		if ( empty( $this->product ) ) {
+			return;
+		}
+
+		add_filter( 'slim_seo_open_graph_tags', [ $this, 'og_tags' ] );
+
+		foreach ( $this->tags as $tag ) {
+			$short_name = strtr( $tag, [
+				'og:' => '',
+				':'   => '_',
+			] );
+			add_filter( "slim_seo_open_graph_{$short_name}", [ $this, "og_$short_name" ] );
+		}
+	}
+
+	public function og_tags( array $tags ): array {
+		return array_merge( $tags, $this->tags );
+	}
+
+	public function og_type(): string {
+		return 'product';
+	}
+
+	public function og_product_price_amount() {
+		return wc_get_price_to_display( $this->product );
+	}
+
+	public function og_product_price_currency(): string {
+		return get_woocommerce_currency();
+	}
+
+	public function og_price_standard_amount() {
+		return $this->product->is_on_sale() ? $this->product->get_regular_price() : '';
+	}
+
+	public function og_availability(): string {
+		$statuses = [
+			'instock'     => 'instock',
+			'outofstock'  => 'out of stock',
+			'onbackorder' => 'backorder',
+		];
+
+		$status = $this->product->get_stock_status();
+
+		return $statuses[ $status ] ?? '';
 	}
 }
