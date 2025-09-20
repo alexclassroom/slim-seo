@@ -1,7 +1,8 @@
 import { Button, Modal } from '@wordpress/components';
 import { useEffect, useReducer, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import { Tooltip, fetcher } from '../helper/misc';
+import { Tooltip, fetcher, useApi } from '../helper/misc';
+import ToInput from './ToInput';
 
 const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) => {
 	const [ redirect, setRedirect ] = useState( {} );
@@ -9,6 +10,8 @@ const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) =>
 	const [ warningMessage, setWarningMessage ] = useState( '' );
 	const [ showAdvancedOptions, toggleAdvancedOptions ] = useReducer( onOrOff => !onOrOff, false );
 	const [ showModal, setShowModal ] = useState( false );
+	const { result: redirects, mutate } = useApi( 'redirects', {}, { returnMutate: true } );
+
 	const title = redirect.id ? __( 'Update Redirect', 'slim-seo' ) : __( 'Add Redirect', 'slim-seo' );
 
 	const openModal = e => {
@@ -20,15 +23,21 @@ const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) =>
 	const updateRedirect = () => {
 		setWarningMessage( '' );
 
-		fetcher( 'update_redirect', { redirect }, 'POST' ).then( result => {
-			if ( ! redirect.id ) {
-				window.location.reload();
+		fetcher( 'update_redirect', { redirect }, 'POST' ).then( id => {
+			setShowModal( false );
+			setIsProcessing( false );
+
+			// Update a redirect.
+			if ( redirect.id ) {
+				callback( redirect );
 				return;
 			}
 
-			setShowModal( false );
-			setIsProcessing( false );
-			callback( redirect );
+			// Add new redirect.
+			redirect.id = id;
+			let newRedirects = [ ...redirects ];
+			newRedirects.unshift( redirect );
+			mutate( newRedirects, { revalidate: false } );
 		} );
 	};
 
@@ -40,8 +49,13 @@ const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) =>
 	const submit = e => {
 		e.preventDefault();
 
-		if ( !redirect.from.length || !redirect.to.length ) {
-			setWarningMessage( __( 'Please fill out From URL and To URL', 'slim-seo' ) );
+		if ( !redirect.from.length ) {
+			setWarningMessage( __( 'Please fill out From URL.', 'slim-seo' ) );
+			return;
+		}
+
+		if ( redirect.type != 410 && !redirect.to.length ) {
+			setWarningMessage( __( 'Please fill out To URL.', 'slim-seo' ) );
 			return;
 		}
 
@@ -74,16 +88,17 @@ const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) =>
 				showModal && (
 					<Modal title={ title } overlayClassName='ss-modal ssr-modal' onRequestClose={ closeModal }>
 						<div className='ssr-modal-field'>
-							<label for='ss-type'>{ __( 'Type', 'slim-seo' ) }
+							<label htmlFor='ss-type'>{ __( 'Type', 'slim-seo' ) }
 								<Tooltip content={ __( 'Redirect type', 'slim-seo' ) } />
 							</label>
 							<select id='ss-type' value={ redirect.type } onChange={ handleChange( 'type' ) }>
 								{ Object.entries( SSRedirection.redirectTypes ).map( ( [ value, label ] ) => <option key={ value } value={ value }>{ label }</option> ) }
 							</select>
+							{ redirect.type == 410 && <p className='description'><small>{ __( '410 means the content is gone and no longer available. It can be deleted permanently. In this case, we need to return the 410 status instead of redirect. If you want to show an alternative page for this content, please consider a 3xx redirect.', 'slim-seo' ) }</small></p> }
 						</div>
 
 						<div className='ssr-modal-field'>
-							<label for='ss-from'>
+							<label htmlFor='ss-from'>
 								{ __( 'From URL', 'slim-seo' ) }
 								<Tooltip content={ __( 'URL to redirect', 'slim-seo' ) } />
 							</label>
@@ -96,16 +111,19 @@ const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) =>
 							</div>
 						</div>
 
-						<div className='ssr-modal-field'>
-							<label for='ss-to'>
-								{ __( 'To URL', 'slim-seo' ) }
-								<Tooltip content={ __( 'Destination URL', 'slim-seo' ) } />
-							</label>
-							<input id='ss-to' type='text' value={ redirect.to } onChange={ handleChange( 'to' ) } />
-						</div>
+						{
+							redirect.type != 410 &&
+							<div className='ssr-modal-field'>
+								<label htmlFor='ss-to'>
+									{ __( 'To URL', 'slim-seo' ) }
+									<Tooltip content={ __( 'Destination URL', 'slim-seo' ) } />
+								</label>
+								<ToInput value={ redirect.to } setRedirect={ setRedirect } />
+							</div>
+						}
 
 						<div className='ssr-modal-field'>
-							<label for='ss-note'>
+							<label htmlFor='ss-note'>
 								{ __( 'Note', 'slim-seo' ) }
 								<Tooltip content={ __( 'Something that reminds you about this redirect', 'slim-seo' ) } />
 							</label>
@@ -136,9 +154,9 @@ const Update = ( { redirectToEdit = {}, children, linkClassName, callback } ) =>
 							)
 						}
 
-						<Button variant='primary' onClick={ submit } disabled={ isProcessing }>{ title }</Button>
+						<button className='button button-primary' onClick={ submit } disabled={ isProcessing }>{ title }</button>
 
-						<p className='ss-warning-message'>{ warningMessage }</p>
+						{ warningMessage && <p className='ss-warning-message'>{ warningMessage }</p> }
 					</Modal>
 				)
 			}

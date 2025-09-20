@@ -4,6 +4,7 @@ namespace SlimSEO\Redirection\Api;
 use WP_REST_Server;
 use WP_REST_Request;
 use SlimSEO\Redirection\Database\Redirects as DbRedirects;
+use SlimSEO\Helpers\Data as DataHelpers;
 
 class Redirects extends Base {
 	protected $db_redirects;
@@ -37,11 +38,17 @@ class Redirects extends Base {
 			'callback'            => [ $this, 'delete_redirects' ],
 			'permission_callback' => [ $this, 'has_permission' ],
 		] );
+
+		register_rest_route( 'slim-seo-redirection', 'posts', [
+			'methods'             => WP_REST_Server::READABLE,
+			'callback'            => [ $this, 'get_posts' ],
+			'permission_callback' => [ $this, 'has_permission' ],
+		] );
 	}
 
-	public function get_redirects() : array {
+	public function get_redirects(): array {
 		$redirects = $this->db_redirects->list();
-		$redirects = array_map( function( $index, $redirect ) {
+		$redirects = array_map( function ( $index, $redirect ) {
 			$redirect['id'] = $index;
 
 			return $redirect;
@@ -50,25 +57,52 @@ class Redirects extends Base {
 		return $redirects;
 	}
 
-	public function exists( WP_REST_Request $request ) : bool {
+	public function exists( WP_REST_Request $request ): bool {
 		$from = $request->get_param( 'from' );
 
 		return $this->db_redirects->exists( $from );
 	}
 
-	public function update_redirect( WP_REST_Request $request ) : bool {
+	public function update_redirect( WP_REST_Request $request ): string {
 		$redirect = $request->get_param( 'redirect' );
 
-		$this->db_redirects->update( $redirect );
-
-		return true;
+		return $this->db_redirects->update( $redirect );
 	}
 
-	public function delete_redirects( WP_REST_Request $request ) : bool {
+	public function delete_redirects( WP_REST_Request $request ): bool {
 		$ids = $request->get_param( 'ids' );
+
+		if ( 'all' === $ids ) {
+			$this->db_redirects->delete_all();
+
+			return true;
+		}
 
 		$this->db_redirects->delete( $ids );
 
 		return true;
+	}
+
+	public function get_posts( WP_REST_Request $request ): array {
+		$search = $request->get_param( 'search' );
+		$pages  = [];
+		$posts  = DataHelpers::get_posts( [
+			's'              => $search,
+			'posts_per_page' => 10,
+
+		] );
+
+		if ( empty( $posts ) ) {
+			return $pages;
+		}
+
+		foreach ( $posts as $post ) {
+			$pages[] = [
+				'title' => $post->post_title,
+				'url'   => get_permalink( $post->ID ),
+			];
+		}
+
+		return $pages;
 	}
 }

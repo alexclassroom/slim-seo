@@ -1,15 +1,52 @@
 <?php
 namespace SlimSEO;
 
+use SlimSEO\Helpers\Data;
+use WP_Post;
+use WP_Post_Type;
 use WP_Term;
 
 class Breadcrumbs {
-	private $args;
-	private $links     = [];
-	private $current   = '';
+	/**
+	 * Breadcrumbs arguments, used for both displaying and for schemas.
+	 * @var array<string>
+	 */
+	private $args = [];
+
+	/**
+	 * Breadcrumbs links.
+	 * @var array<int, array{url: string, text: string}>
+	 */
+	private $links = [];
+
+	/**
+	 * Current page title, e.g. the last item in the breadcrumbs.
+	 * @var string|null
+	 */
+	private $current = '';
+
+	/**
+	 * Whether the breadcrumbs are parsed.
+	 * @var bool
+	 */
 	private $is_parsed = false;
 
-	public function __construct() {
+	public function setup(): void {
+		$this->setup_args();
+
+		add_shortcode( 'slim_seo_breadcrumbs', [ $this, 'render_shortcode' ] );
+
+		register_block_type( SLIM_SEO_DIR . 'js/breadcrumbs/dist/', [
+			'render_callback' => [ $this, 'render_block' ],
+		] );
+	}
+
+	/**
+	 * Setup args for breadcrumbs.
+	 * Make it a public method to be called in Slim SEO Schema.
+	 * Separate it into a method to call it after "init" hook to avoid loading text domain too early in WordPress 6.7.
+	 */
+	public function setup_args(): void {
 		$this->args = [
 			'separator'       => '&raquo;',
 			'taxonomy'        => 'category',
@@ -21,21 +58,28 @@ class Breadcrumbs {
 		];
 	}
 
-	public function setup(): void {
-		add_shortcode( 'slim_seo_breadcrumbs', [ $this, 'render_shortcode' ] );
-
-		register_block_type( SLIM_SEO_DIR . 'js/breadcrumbs/dist/', [
-			'render_callback' => [ $this, 'render_block' ],
-		] );
-	}
-
 	public function render_block( $attributes ): string {
+		$attributes['display_current'] = $attributes['display_current'] ? 'true' : 'false';
+
 		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-			return '<small><i>' . __( 'Due to the limitation of conditional tags in the admin, the preview of the breadcrumbs block is not available.', 'slim-seo' ) . '</i></small>';
+			$this->prepare_for_block_preview( $attributes );
 		}
 
-		$attributes['display_current'] = $attributes['display_current'] ? 'true' : 'false';
 		return $this->render_shortcode( $attributes );
+	}
+
+	private function prepare_for_block_preview( array $args ): void {
+		$this->args = wp_parse_args( $args, $this->args );
+
+		// Add sample links: Home » Category » Post title.
+		$this->add_link( home_url( '/' ), $this->args['label_home'] );
+		$this->add_link( '#', __( 'Parent', 'slim-seo' ) );
+
+		if ( 'true' === $this->args['display_current'] ) {
+			$this->current = __( 'Page title', 'slim-seo' );
+		}
+
+		$this->is_parsed = true;
 	}
 
 	public function render_shortcode( $atts ): string {
@@ -54,15 +98,16 @@ class Breadcrumbs {
 		$template = '<a href="%s" class="breadcrumb%s">%s</a>';
 		foreach ( $links as $i => $item ) {
 			$class   = 0 === $i ? ' breadcrumb--first' : '';
-			$items[] = sprintf( $template, esc_url( $item['url'] ), $class, esc_html( wp_strip_all_tags( $item['text'] ) ), $i + 1 );
+			$items[] = sprintf( $template, esc_url( $item['url'] ), esc_attr( $class ), esc_html( $item['text'] ), $i + 1 );
 		}
 
 		// Current page.
 		if ( 'true' === $this->args['display_current'] ) {
-			$items[] = sprintf( '<span class="breadcrumb breadcrumb--last" aria-current="page">%s</span>', esc_html( wp_strip_all_tags( $this->current ) ) );
+			$items[] = sprintf( '<span class="breadcrumb breadcrumb--last" aria-current="page">%s</span>', esc_html( $this->current ) );
 		}
 
-		$output .= implode( " <span class='breadcrumbs__separator'>{$this->args['separator']}</span> ", $items );
+		$sep     = esc_html( $this->args['separator'] );
+		$output .= implode( " <span class='breadcrumbs__separator' aria-hidden='true'>{$sep}</span> ", $items );
 		$output .= '</nav>';
 
 		return $output;
@@ -70,6 +115,10 @@ class Breadcrumbs {
 
 	public function get_links(): array {
 		return apply_filters( 'slim_seo_breadcrumbs_links', $this->links );
+	}
+
+	public function get_current_page(): string {
+		return $this->args['display_current'] === 'true' ? (string) $this->current : '';
 	}
 
 	public function parse(): void {
@@ -91,16 +140,28 @@ class Breadcrumbs {
 			$this->current = single_post_title( '', false );
 		} elseif ( is_post_type_archive() ) {
 			$this->current = post_type_archive_title( '', false );
+
+			// Post type archive can be used as the search results page (like in WooCommerce).
+			// In that case, we need to show both the post type archive title and the search results.
+			if ( is_search() ) {
+				$post_type_object = get_queried_object();
+				if ( $post_type_object instanceof WP_Post_Type ) {
+					$this->add_post_type_archive_link( $post_type_object->name );
+				}
+				$this->current = sprintf( $this->args['label_search'], get_search_query() );
+			}
 		} elseif ( is_singular() ) {
 			$this->add_singular();
 		} elseif ( is_tax() || is_category() || is_tag() ) { // Taxonomy archive.
-			$term     = get_queried_object();
-			$taxonomy = get_taxonomy( $term->taxonomy );
-			if ( ! empty( $taxonomy->object_type ) && 1 === count( $taxonomy->object_type ) ) {
-				$this->add_post_type_archive_link( reset( $taxonomy->object_type ) );
-			}
+			$term = get_queried_object();
+			if ( $term instanceof WP_Term ) {
+				$taxonomy = get_taxonomy( $term->taxonomy );
+				if ( ! empty( $taxonomy->object_type ) && 1 === count( $taxonomy->object_type ) ) {
+					$this->add_post_type_archive_link( reset( $taxonomy->object_type ) );
+				}
 
-			$this->add_term_ancestors( $term );
+				$this->add_term_ancestors( $term );
+			}
 			$this->current = single_term_title( '', false );
 		} elseif ( is_search() ) {
 			$this->current = sprintf( $this->args['label_search'], get_search_query() );
@@ -116,7 +177,11 @@ class Breadcrumbs {
 	}
 
 	private function add_singular(): void {
-		$post          = get_queried_object();
+		$post = get_queried_object();
+		if ( ! ( $post instanceof WP_Post ) ) {
+			return;
+		}
+
 		$this->current = single_post_title( '', false );
 
 		$this->add_post_type_archive_link( $post->post_type );
@@ -153,18 +218,22 @@ class Breadcrumbs {
 		}
 
 		$post_type_object = get_post_type_object( $post_type );
-		$link             = get_post_type_archive_link( $post_type );
-		$text             = $post_type_object->labels->name;
+		if ( ! ( $post_type_object instanceof WP_Post_Type ) ) {
+			return;
+		}
+		$text = $post_type_object->labels->name;
 
 		// If a page is set as the post type archive (like WooCommerce shop), then get title from that page.
 		// Otherwise get from the post type archive settings.
-		if ( is_string( $post_type_object->has_archive ) ) {
-			$page = get_page_by_path( $post_type_object->has_archive );
-			if ( $page ) {
-				$text = get_the_title( $page );
+		$archive_page = Data::get_post_type_archive_page( $post_type );
+		if ( $archive_page ) {
+			if ( $archive_page->post_status !== 'publish' ) {
+				return;
 			}
+			$text = get_the_title( $archive_page );
 		}
 
+		$link = get_post_type_archive_link( $post_type );
 		if ( $link ) {
 			$this->add_link( $link, $text );
 		}

@@ -1,11 +1,11 @@
-=== Slim SEO - Fast & Automated WordPress SEO Plugin ===
-Contributors: elightup, rilwis, hungviet91, barcavn2
+=== Slim SEO - A Fast & Automated SEO Plugin For WordPress ===
+Contributors: elightup, rilwis, hungviet91, barcavn2, doanducanh
 Donate link: https://wpslimseo.com/products/
-Tags: seo, search engine optimization, schema, sitemap, google, facebook, twitter, meta tags, meta description, open graph, twitter card, xml sitemap
-Requires at least: 5.7
-Tested up to: 6.2
-Requires PHP: 7.1
-Stable tag: 3.20.1
+Tags: seo, schema, xml sitemap, redirection, header
+Requires at least: 5.9
+Tested up to: 6.8.2
+Requires PHP: 7.2
+Stable tag: 4.6.2
 License: GPL v3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -22,6 +22,10 @@ Currently there are many SEO plugins for WordPress in the market. But these plug
 SEO should be an integrated part of WordPress, where users don't need or need very little effort to configure for SEO. The main reason is that not everyone understands the terms of SEO and how to configure them optimally.
 
 So, we made [**Slim SEO**](https://wpslimseo.com).
+
+https://www.youtube.com/watch?v=MVNjGAiu2bg
+
+https://www.youtube.com/watch?v=vnC94TMn3wU
 
 Slim SEO is a full-featured SEO plugin, that's done right! It provides a complete SEO solution for WordPress where the configuration has been done automatically. Users do not need to care about their complex and semantic options.
 
@@ -40,10 +44,13 @@ The following meta tags are auto-generated and optimized for the best SEO scores
 - [Meta robots tag](https://docs.wpslimseo.com/slim-seo/meta-robots-tag/): decide which pages are indexed and which ones not.
 - [Facebook Open Graph Tags](https://docs.wpslimseo.com/slim-seo/facebook-open-graph-tags/): share your posts on Facebook beautifully.
 - [Twitter Card Tags](https://docs.wpslimseo.com/slim-seo/twitter-card-tags/): share your posts on Twitter beautifully.
+- LinkedIn meta tags
 
 #### 2. [XML Sitemap](https://docs.wpslimseo.com/slim-seo/xml-sitemap/)
 
 Slim SEO automatically generates XML sitemap (at `domain.com/sitemap.xml`) to submit to search engines. With XML sitemaps, your website are indexed fast and completely.
+
+Besides the normal XML sitemap, Slim SEO also includes sitemaps for images and Google news.
 
 #### 3. [Breadcrumbs](https://docs.wpslimseo.com/slim-seo/breadcrumbs/)
 
@@ -69,12 +76,21 @@ Slim SEO automatically adds the some structured data to the website via JSON-LD 
 - [Import and export](https://docs.wpslimseo.com/slim-seo/import-export/) data or migrate data from popular SEO plugins
 - Auto redirect if post slug changed
 
-### Premium plugins
+### Slim SEO Pro
 
-- [Slim SEO Schema](https://wpslimseo.com/slim-seo-schema/): an advanced and comprehensive schema builder for your WordPress websites, which allow you to add schema to your custom post types via a visual and user-friendly UI.
-- [Slim SEO Link Manager](https://wpslimseo.com/slim-seo-link-manager/): build and monitor internal links in your WordPress websites in real-time with advanced & insightful reports.
+Upgrade to [Slim SEO Pro](https://elu.to/wrp) to have access to advanced SEO features without complexity:
 
-[View all](https://wpslimseo.com/products/)
+- Visual schema builder
+- 30+ pre-built schema types
+- Custom schema with JSON-LD
+- Contextual link suggestions
+- Real-time link health monitoring
+- Broken link repair
+- Link updater
+- View search performance with Google Search Console integration
+- Improve your content with writing assistant
+
+[Get Slim SEO Pro now](https://elu.to/wrp).
 
 ### Who should use Slim SEO?
 
@@ -84,15 +100,15 @@ However, Slim SEO is perfectly suitable for users who prefer simplicity or do no
 
 ## You might also like
 
-If you love this plugin, please try our other great products:
+If you like this plugin, you might also like our other WordPress products:
 
-- [Meta Box](https://metabox.io): The best plugin for adding custom meta boxes and custom fields for WordPress
-- [GretaThemes](https://gretathemes.com): Beautiful and easy to use WordPress themes
-- [Auto Listings](https://wpautolistings.com): The best WordPress plugin for car dealership & car listings websites.
+- [Meta Box](https://metabox.io) - A powerful WordPress plugin for creating custom post types and custom fields.
+- [GretaThemes](https://gretathemes.com) - Free and premium WordPress themes that clean, simple and just work.
+- [Auto Listings](https://wpautolistings.com) - A car sale and dealership plugin for WordPress.
 
 == Installation ==
 
-Before installing, please note that the plugin requires PHP >= 5.6.
+Before installing, please note that the plugin requires PHP >= 7.2.
 
 1. Go to Plugins > Add New.
 2. Search for "Slim SEO".
@@ -142,411 +158,103 @@ Yes, you can. When you edit a post or a page, there's a "Search Engine Optimizat
 
 The sitemap URL is located at `domain.com/sitemap.xml`.
 
+= How to remove plugin's data when uninstalling =
+
+Add the following constant in your `wp-config.php` file:
+
+`define( 'SLIM_SEO_DELETE_DATA', true );`
+
 == Screenshots ==
 
 == Upgrade Notice ==
 
 == Changelog ==
 
-= 3.20.1 - 2023-04-25 =
-
-Based on the user feedback, we decide to disable user sitemap by default. You can still enable it if needed with the snippet:
-
-```php
-add_filter( 'slim_seo_user_sitemap', '__return_true' );
-```
-
-You might want to re-save the permalinks to update the rewrite rules.
-
-Other fixes:
-- Improve the Bricks integration to work with pages that use templates
-
-= 3.20.0 - 2023-04-20 =
-- Add user sitemap
-- Add breadcrumbs block, useful to be used with the Full Site Editor
-- Add Pinterest rich pins for WooCommerce
-- Improve Bricks + WPGB integration, ignore elements with query loop
-- Exclude Bricks templates from the sitemap
-- Skip rendering some blocks for meta description & Open Graph, which cause custom CSS issue with FluentForms
-- Fix migrating from AIO SEO plugin, due to its recent changed
-- Fix redirect not working with mailto: link
-- Fix compatibility with Auto Listings & LifterLMS
-
-= 3.19.1 - 2023-04-14 =
-- Exclude external images from the sitemap
-- Fix Bricks dynamic tags not rendering
-- Fix clicking on canonical field focusing on title field
-
-= 3.19.0 - 2023-04-04 =
-- Add canonical URL
-- If a page is set as the post type archive, get the page title for the breadcrumbs
-- Make breadcrumbs include product categories for WooCommerce
-- Fix rel link for the 1st page containing /page/1
-
-= 3.18.2 - 2023-03-21 =
-- Add type safe for checking terms in breadcrumbs
-- Fix regex redirection causing PHP warnings
-- Fix link attributes in WP 6.0
-
-= 3.18.1 - 2023-02-22 =
-
-- Make plugin name clear for translators (#76). Credit Alex Lion (@alexclassroom).
-- Fix PHP warning for the Google Web Stories integration
-- Fix wrong reference to plugin's service list
-- Fix breadcrumbs on pages with other queries
-
-= 3.18.0 - 2023-02-17 =
-
-- Increase min required PHP version to 7.1
-- Add [rel nofollow, sponsored and ugc to links](https://wpslimseo.com/slim-seo-3-18/). Works for both classic and block editors.
-- Add integration for Ultimate Member
-- Improve integration for WooCommerce
-- If a page is set as the post type archive, get SEO settings from that page
-- Truncate the admin columns for meta and use tooltip to show it full and improve CSS for it
-- Fix redirect 404 not working if 404 logs is not enabled
-
-= 3.17.0 - 2023-02-06 =
-- Add integration with AffiliateWP
-- Improve compatible with Bricks & WP Grid Builder
-- Redirect to the settings page after activation
-
-= 3.16.6 - 2023-01-31 =
-- Make filters to meta tags (title, description, robots) work on the admin post/term list table
-- Don't add schedule or remove 404 log if not enabled
-- Only run schedule for delete logs automatically if 404 log table exists
-- Fix taxonomy quick edit not working
-
-= 3.16.5 - 2023-01-03 =
-- Set default OpenGraph tag og:image:alt to image title if alt text is missing
-- Remove the optional OpenGraph tag article:author for privacy and security reasons
-- Make default title value preview reflect the real meta title even after filtering by PHP
-- Fix site title & site description has escaped characters in the input placeholder
-- Fix wrong upgrade link
-
-= 3.16.4 - 2022-12-28 =
-- Set meta column widths to prevent layout broken
-- Add filter for text in feed
-- Deny request to post type/taxonomy sitemaps if they're filtered
-- Fix redirect with regex
-- Fix wrong 404 link in the report table
-- Fix cannot enter spaces in redirect notes
-
-= 3.16.3 - 2022-12-19 =
-- Auto redirect if post slug changed
-- Fix param type in meta title
-
-= 3.16.2 - 2022-12-13 =
-- Add integration for Auto Listings plugin
-- WooCommerce integration: Fix title for shop page. Now it takes from the SEO settings and fallback to the page title.
-- Updated recommended image size for Facebook and Twitter
-- Hide Code tab if disable "code" feature
-- Add Redirection to features list to enable/disable it if needed
-
-= 3.16.1 - 2022-11-29 =
-- Add migration redirects from other plugins
-- Improve compatibility with Genesis
-- Move auto redirection feature to Settings in Redirection tab
-- Fix translation for JS
-- Fix AIO SEO error when migration if the plugin is not activated
-- Fix admin columns not available for post types created late
-
-= 3.16.0 - 2022-11-10 =
-
-- Add [redirection and 404 link monitoring](https://wpslimseo.com/slim-seo-3-16/).
-- Improve compatibility for Divi.
-
-= 3.15.2 - 2022-09-22 =
-- Use post excerpt if available for meta description before the builder content in case of using page builders
-- Fix JS warning in the settings page when migration tool is not available
+### 4.6.2 - 2025-08-13
 
-= 3.15.1 - 2022-08-18 =
-- Fix enqueuing wrong quick/bulk edit CSS/JS for the settings page
-- Improve check for getting SEO data
+- Multilingual sitemap: only output translated versions if available
 
-= 3.15.0 - 2022-08-12 =
-- Edit SEO data in quick edit and bulk edit
-- Hide Tools tab if no other SEO plugins active (for migration)
-- Add hooks for Twitter Cards
-- Fix CSS when Elementor is active
+= 4.6.1 - 2025-07-29 =
 
-= 3.14.2 - 2022-07-04 =
-- Removed image caption and title from the sitemap as they're deprecated by Google
-- Fix compatibility with the form widget (FluentForms) in Oxygen
-- Fix compatibility with FluentForms
-
-= 3.14.1 - 2022-06-21 =
-- Fix parsing content from ZionBuilder brakes image slider
-- Fix breadcrumbs schema output when it's inactive
+- Fix normalizing URL when saving to the database
+- Remove duplicated HTML input names for toggles
 
-= 3.14.0 - 2022-06-18 =
-- Add support for Divi page builder
-- Add support for Zion page builder
-- Fix PHP notice when disabling breadcrumbs
+= 4.6.0 - 2025-06-30 =
 
-= 3.13.4 - 2022-04-11 =
-- Fix not showing taxonomy terms for hierarchical post types
+- Add support for migrating data from Squirrly SEO
+- Disable LinkedIn tags by default as many users don't config the `display_name` for authors, which will expose authors' usernames. For those who want to use LinkedIn tags, please use this snippet: `add_filter( 'slim_seo_linkedin_tags', '__return_true' );`
+- Improve the performance of parsing dynamic tags
 
-= 3.13.3 - 2022-03-21 =
-- Sitemap: don't parse shortcodes in post content
-- Fix error migrating from AIO SEO
-
-= 3.13.2 - 2022-02-13 =
-- Fix fatal error on WP < 5
+= 4.5.7 - 2025-06-19 =
 
-= 3.13.1 - 2022-02-10 =
-- Fix noindex is added to robots with some plugins/themes alter the main query loop
+Fix not rendering description for posts built with Beaver Builder because BB's block `fl-builder/layout` is ignored.
 
-= 3.13.0 - 2022-02-08 =
-- Add integration for Bricks Builder
-- Fix jumping when switching tabs
-- Fix not rendering dynamic blocks for meta tags
+= 4.5.6 - 2025-06-19 =
 
-= 3.12.0 - 2022-01-07 =
-- Add Divi compatibility. Props Jay (@grandeljay)
-- Disable HTTPS notification on local environments
-- Improve the code of the settings page
-
-= 3.11.1 - 2021-11-16 =
-- Fix error on taxonomy page
+Ignore Elementor pages if it contains login, register shortcodes or templates, to avoid conflict with their logic
 
-= 3.11.0 - 2021-11-16 =
-- Show meta title and meta description in admin columns
-- Add migration for SEOPress
-- Migrate noindex settings
+= 4.5.5 - 2025-06-09 =
 
-= 3.10.2 - 2021-09-27 =
-- Breadcrumbs: add link to post type archive for taxonomies if the taxonomy is attached to one post type only
-- Fix text domain for string translations
-
-= 3.10.1 - 2021-07-22 =
-- Fix Jetpack Boost defer JS made sitemap disabled
-- Fix Meta Box plugin shortcodes parsed for the meta description
+- Add support for WPML's new feature: auto limit words for SEO fields
+- Allow to sort redirects by table header
+- Fix SQL injection issue with Redirection logs
 
-= 3.10.0 - 2021-03-15 =
-- Add fb:app_id and twitter:site meta tags
-- Improve style for settings page
-- Remove header cleaner service which breaks HTTPS checking in Site Health and provides no SEO benefits.
-- Fix missing message when saving settings
-- Fix cannot disable auto redirection
-
-= 3.9.4 - 2021-03-06 =
-- Improve meta robots tag to be compatible with WordPress 5.7
-
-= 3.9.3 - 2021-03-01 =
-- Add theme support for meta title in case theme authors forget
-- Fix notice appear for article author in Open Graph
-- Improve migration from AIO SEO
+= 4.5.4 - 2025-05-19 =
 
-= 3.9.2 - 2021-02-08 =
-- Improve migration from AIO SEO
-
-= 3.9.1 - 2020-02-06 =
-- Add filter for open graph tag values
-- Add article:author open graph tag to support Pinterest
-
-= 3.9.0 - 2020-12-24 =
-- Add options to enable/disable plugin features
-
-= 3.8.0 - 2020-12-02 =
-- Add migration from Rank Math
-- Fix rel links for the the static blog page
-- Add filter for Open Graph tags
-
-= 3.7.1 - 2020-11-18 =
-- Hide Elementor, Beaver Builder, Oxygen template post types in sitemaps
-
-= 3.7.0 - 2020-11-17 =
-- Add integration for WPML and Polylang.
-
-= 3.6.2 - 2020-11-02 =
-- Fix canonical URL for static blog page.
-
-= 3.6.1 - 2020-10-26 =
-- Fix no spaces between HTML tags when generate description automatically in Oxygen
-- Hide SEO settings meta box for Oxygen templates
-- Fix PHP notice when generate meta description if post not found
-
-= 3.6.0 - 2020-10-21 =
-- Add default Facebook and Twitter images for sharing
-- Don't remove meta values from other SEO plugins after migration (for safety)
-
-= 3.5.4 - 2020-09-29 =
-- Show large image in the SERP
-- Fix SEOFramework migration
-
-= 3.5.3 - 2020-09-10 =
-- Add support for Velocity plugin.
-
-= 3.5.2 - 2020-09-05 =
-- Fix SEO settings not appear for WooCommerce categories.
-- Add Settings link on the plugin row.
-
-= 3.5.1 - 2020-08-10 =
-- Hotfix for not checking Google Web Stories.
-
-= 3.5.0 - 2020-08-10 =
-- Add support for Google Web Stories.
-- Improve integrations for Jetpack and AMP. Disable Jetpack SEO tools completely when the plugin is activated.
-- Ensure no meta if users enter nothing.
-- Sanitize plugin options, remove option if no settings is saved.
-
-= 3.4.8 - 2020-08-06 =
-- Temporarily disable the core sitemaps in WordPress 5.5 to avoid any conflict and redundancy. We're working on a deep integration to make sure Slim SEO works well with it.
-
-= 3.4.7 - 2020-07-29 =
-- Fix typo in JS which breaks the preview of meta fields.
-
-= 3.4.6 - 2020-07-28 =
-- Fix JS error can't update counter.
-- Remove invalid characters in the sitemap XML.
-- Fix non-protocol URL of images in the sitemap.
-
-= 3.4.5 - 2020-07-21 =
-- Fix image relative URLs in the sitemap.
-- Add default title for images in the sitemap.
-- Fix JavaScript error if the post edit is customized and don't have the plugin inputs.
-
-= 3.4.4 - 2020-07-16 =
-- Fix Oxygen's code blog not working.
-
-= 3.4.3 - 2020-07-06 =
-- Fix compatibility with EDD Invoices plugin.
-
-= 3.4.2 - 2020-06-19 =
-- Fix Oxygen slider not rendering properly.
-- Increase the maximum number of URLs in sitemap to 2000.
-- Add filter to change query args for sitemaps.
-- Paginate taxonomy sitemap.
-
-= 3.4.1 - 2020-06-12 =
-- Hotfix error editing Oxygen templates.
-
-= 3.4.0 - 2020-06-12 =
-- Add integration for LifterLMS: fix compatibility issues and allow users to define meta title/description for catalog pages. Props Rocco Aliberti.
-- Add integration for Oxygen builder, now the plugin parses the content built with Oxygen.
-- Add filter for changing context/priority for meta box.
-- Add support for output code after the opening `<body>` tag.
-- Fix illegal string offset ‘url’ in post sitemap.
-- Use WP native `.description` CSS class.
-
-= 3.3.2 - 2020-05-21 =
-- Add password protection support for meta description
-- Add rel prev/next links for archive pages
-
-= 3.3.1 - 2020-05-04 =
-- Fix missing function get_term_value for image
-
-= 3.3.0 - 2020-05-03 =
-- Add canonical URL for missing pages
-- Add settings for homepage when it shows latest posts
-- Add filter for breadcrumb links to make work with other plugins
-- Improve UI, removing tabs
-
-= 3.2.3 - 2020-04-20 =
-- Remove canonical link when a page is not indexed
-- Fix "Hide from search result pages" not working for static blog & WooCommerce shop pages.
-- Fix wrong text domain
-
-= 3.2.2 - 2020-02-25 =
-- Fix loopback request failed in Site Health
-- Load Open Graph, Twitter Cards & Breadcrumbs on the front end only
-- Update JavaScript code, using vanilla JavaScript (no jQuery)
-
-= 3.2.1 - 2020-02-12 =
-- Fix stable tag in readme
-
-= 3.2.0 - 2020-02-12 =
-- Add migration tool to migrate SEO data from popular SEO plugins.
-
-= 3.1.3 =
-- Fixed: Fix SEO settings not working for WooCommerce shop
-- Fixed: Fix multiple messages sent when using Very Simple Contact Form
-- Fixed: Fix WordPress deprecation notice for `sanitize_url`
-- Fixed: Fix "non-object" error on posts having no author
-- Changed: Remove filter to disable schema. Use `slim_seo_init` hook instead.
-
-= 3.1.2 =
-- Fixed: Add missing meta description for author archive
-- Changed: Allow developers to disable features
-
-= 3.1.1 =
-- Fixed: Fix JS error when the admin notice is hid by other plugins
-- Fixed: Fix <link> tag from HappyForms being removed
-- Changed: Remove noindexed posts/terms from sitemap
-
-= 3.1.0 =
-- Add image settings for social networks
-
-= 3.0.2 =
-- Add live preview for meta tags
-
-= 3.0.1 =
-- Added: Add character counter for custom meta tags
-- Changed: Change length of meta description to 160 characters.
-- Fixed: Fix custom meta tags for terms
-
-= 3.0.0 =
-- Add meta box for entering custom meta tags for posts and terms
-- Add settings page for entering header/footer code (Google Analytics, Google Tag Manager, webmaster tools verification)
-
-= 2.1.1 =
-- Output paginated sitemap for sites with thousands of posts
-
-= 2.1.0 =
-- Add support for AMP
-- Add image sitemap
-- Add Organization schema
-
-= 2.0.3 =
-- Fixed: Fix no error notice on WooCommerce login page.
-- Added: Add SSL warning.
-
-= 2.0.2 =
-- Disable schema markup for Beaver Theme and Genesis.
-
-= 2.0.1 =
-- Output Article and Author for single posts only.
-
-= 2.0.0 =
-- Improved Schema markup. Use united schema output inside one `<script>` tag and add connections between entities. See [documentation](https://docs.wpslimseo.com/slim-seo/schema/) for details.
-
-= 1.5.1 =
-- Removed preferred site name from JSON-LD as Google drops support for it.
-- Made notification dismissible.
-
-= 1.5.0 =
-- Added: Added excerpt to pages to let users customize meta description, especially for static homepage.
-- Added: Added support for [JSON-LD structured data](https://github.com/elightup/slim-seo/wiki/JSON-LD). Supported Website data (including search box) and Breadcrumbs.
-- Added: [Redirect author page](https://github.com/elightup/slim-seo/wiki/Auto-Redirection) to homepage if no posts or the website has only one user.
-- Added: Added support for [meta robots tag](https://github.com/elightup/slim-seo/wiki/Meta-Robots-Tag).
-	- Do not index the follow links:
-		- search results
-		- 404
-		- feed
-		- private posts
-		- page with no content
-	- Do not follow links:
-		- register
-		- login
-
-= 1.4.0 =
-- Added: Added notification for SEO settings errors in the admin.
-- Added: Added link to original post in the feed.
-- Changed: Flushed rewrite rules on plugin activate/deactivate to make Sitemap URL works automatically.
-- Fixed: Fixed shortcodes in post content not parsed in meta description. Fixed for page builders like Divi.
-
-= 1.3.1 =
-- Changed: Redirect attachment page to the attachment URL (image or file URL) instead of parent post. This allows users to see the full-size image. Works when users insert a gallery into post and they want to see full-size images.
-
-= 1.3.0 =
-- Added: Added breadcrumbs functionality. Use `[slim_seo_breadcrumbs]` shortcode to output in your template files. See [documentation](https://github.com/elightup/slim-seo/wiki/Breadcrumbs).
-
-= 1.2.0 =
-- Added: Added sitemap URL to robots.txt
-- Added: Auto add missing alt attribute for images.
-
-= 1.1.0 =
-- Added: redirect attachment page to parent post.
-
-= 1.0 =
-- First version.
+- Add type safe check for Bricks
+- Escape output of breadcrumbs
+
+= 4.5.3 - 2025-05-08 =
+
+- Improve getting post author ID
+- Beaver Builder integration: remove `fl-builder-template-category` taxonomy
+- Improve integrations with Bricks
+
+= 4.5.2 - 2025-04-19 =
+
+- Fix Bricks compatibility when using with nested loops
+- Ignore Divi's `layout_category` taxonomy
+
+= 4.5.1 - 2025-04-11 =
+
+- To avoid issues with Bricks, from now the plugin doesn't parse the content from Bricks for generating meta tags if the post uses a template. In this case the plugin always use the post content.
+- Fix rendering meta tags in the admin post list table as Bricks doesn't support parsing dynamic tags in the admin.
+- Ignore Bricks components when parsing meta tags
+- Fix core/heading block is excluded from parsing for meta tags
+
+= 4.5.0 - 2025-03-27 =
+
+Highlights:
+
+- This version improves the integration for Polylang and WPML, allowing you to switch languages for the settings page and enter different settings per language.
+- Add support for Visual Composer (WPBakery Page Builder) and Tagdiv Composer (Newspaper theme)
+
+Other changes:
+
+- Exclude Beaver Builder shortcode by default
+- Do not enqueue JS for non-supported post types in the admin
+- Fix the integration for Sensei LMS
+- Fix issues with WooCommerce integration to not parsing content of pages below cart/checkout/my account pages in admin page table list
+
+= 4.4.1 - 2025-03-04 =
+- Improve Woo integration, avoid page builders to parse content for Woo's pages to generate meta description (cart, checkout, my account)
+- Fix for JetEngine custom DB table for meta storage
+- Fix wrong og:url
+
+= 4.4.0 - 2025-03-03 =
+
+Highlights:
+
+- This version adds an integration with Breakdance page builder plugin, which allows the plugin to parse content from Breakdance for generating meta description.
+- Since this version, Slim SEO won't parse all dynamic blocks when parsing the content to generate meta description. This avoids breaking layout, especially when those blocks have logic or enqueue CSS/JS. This change will fix a lot of issues with plugins that use dynamic blocks like form plugins (JetForm Builder, Forminator, etc.).
+- For meta title and meta description in the admin post list table, now the plugin will display a small indicator if the post has manual title or description.
+
+Other changes:
+
+- Improve integration with WPML, allowing to translate settings like meta tags into different languages. Requires WPML String Translation plugin.
+- Capitalize only 1st letter in image alt to work better with all languages.
+- Fix missing posts in alternate languages in the sitemap that don't have translations in the default language (with Polylang).
+- Fix missing separator in title for paginated pages
+- Fix issue with REST API
+
+For full changelog, see [here](https://github.com/elightup/slim-seo/blob/master/CHANGELOG.md).

@@ -1,5 +1,8 @@
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/elightup/slim-seo/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/elightup/slim-seo/?branch=master)
+![WordPress Plugin Downloads](https://img.shields.io/wordpress/plugin/dt/slim-seo)
+![WordPress Plugin Active Installs](https://img.shields.io/wordpress/plugin/installs/slim-seo)
+![WordPress Plugin Rating](https://img.shields.io/wordpress/plugin/rating/slim-seo)
 [![Version](https://img.shields.io/wordpress/plugin/v/slim-seo.svg)](https://wpslimseo.com)
+![WordPress Plugin Last Updated](https://img.shields.io/wordpress/plugin/last-updated/slim-seo)
 
 # Slim SEO - A Fast & Automated SEO Plugin For WordPress
 
@@ -28,10 +31,13 @@ The following meta tags are auto-generated and optimized for the best SEO scores
 - [Meta robots tag](https://wpslimseo.com/docs/meta-robots-tag/): decide which pages are indexed and which ones not.
 - [Facebook Open Graph Tags](https://wpslimseo.com/docs/facebook-open-graph-tags/): share your posts on Facebook beautifully.
 - [Twitter Card Tags](https://wpslimseo.com/docs/twitter-card-tags/): share your posts on Twitter beautifully.
+- LinkedIn meta tags
 
 ### 2. [XML Sitemap](https://wpslimseo.com/docs/xml-sitemap/)
 
 Slim SEO automatically generates XML sitemap (at `domain.com/sitemap.xml`) to submit to search engines. With XML sitemaps, your website are indexed fast and completely.
+
+Besides the normal XML sitemap, Slim SEO also includes sitemaps for images and Google news.
 
 ### 3. [Breadcrumbs](https://wpslimseo.com/docs/breadcrumbs/)
 
@@ -43,13 +49,13 @@ Schema is a way that describes structured data for search engines. Based on the 
 
 Slim SEO automatically adds structured data to the website via JSON-LD which makes your website more SEO-friendly. Not only schemas are created by the plugin, there are also meaningful connections between them. For example, an article (single post) is the main entity of the current webpage. Slim SEO does that all without any configuration.
 
-#### 5. [Redirection](https://docs.wpslimseo.com/slim-seo/redirection/)
+### 5. [Redirection](https://docs.wpslimseo.com/slim-seo/redirection/)
 
 - Setting up redirection rules easily
 - Auto redirect non-www to www and vice versa
 - 404 link monitoring
 
-#### 6. And many more
+### 6. And many more
 
 - [Inserting Google Analytics, Facebook pixel or any code to the header or footer](https://docs.wpslimseo.com/slim-seo/header-footer-code/) of the site
 - Auto prevent scraping content from [RSS feed](https://docs.wpslimseo.com/slim-seo/rss-feed/)
@@ -57,12 +63,19 @@ Slim SEO automatically adds structured data to the website via JSON-LD which mak
 - [Import and export](https://docs.wpslimseo.com/slim-seo/import-export/) data or migrate data from popular SEO plugins
 - Auto redirect if post slug changed
 
-### Premium plugins
+## Slim SEO Pro
 
-- [Slim SEO Schema](https://wpslimseo.com/slim-seo-schema/): an advanced and comprehensive schema builder for your WordPress websites, which allow you to add schema to your custom post types via a visual and user-friendly UI.
-- [Slim SEO Link Manager](https://wpslimseo.com/slim-seo-link-manager/): build and monitor internal links in your WordPress websites in real-time with advanced & insightful reports.
+Upgrade to [Slim SEO Pro](https://elu.to/grsp) to have access to advanced SEO features without complexity:
 
-[View all](https://wpslimseo.com/products/)
+- Visual schema builder
+- 30+ pre-built schema types
+- Custom schema with JSON-LD
+- Contextual link suggestions
+- Real-time link health monitoring
+- Broken link repair
+- Link updater
+
+[Get Slim SEO Pro now](https://elu.to/grsp).
 
 ## Who should use Slim SEO?
 
@@ -72,11 +85,11 @@ However, Slim SEO is perfectly suitable for users who prefer simplicity or do no
 
 ## You might also like
 
-If you love this plugin, please try our other great products:
+If you like this plugin, you might also like our other WordPress products:
 
-- [Meta Box](https://metabox.io): The best plugin for adding custom meta boxes and custom fields for WordPress
-- [GretaThemes](https://gretathemes.com): Beautiful and easy to use WordPress themes
-- [Auto Listings](https://wpautolistings.com): The best WordPress plugin for car dealership & car listings websites.
+- [Meta Box](https://metabox.io) - A powerful WordPress plugin for creating custom post types and custom fields.
+- [GretaThemes](https://gretathemes.com) - Free and premium WordPress themes that clean, simple and just work.
+- [Auto Listings](https://wpautolistings.com) - A car sale and dealership plugin for WordPress.
 
 ## Installation
 
@@ -119,12 +132,6 @@ Twitter inherits some tags from Open Graph such as title, description and image.
 If your homepage is a static page, then it's treated like a normal page. The meta description is generated from page content, and the featured image will be used for Open Graph tags.
 
 If your homepage shows latest posts, then it's already done automatically by the plugin.
-
-**Can I change the meta tags manually?**
-
-It's not available at the moment. Our purpose is provide a configuration-free SEO plugin for WordPress, so you don't get lost in the options. We might improve the plugin later to add essential options. But for now, it's zero configuration.
-
-If you need custom settings, we recommend using Yoast SEO plugin.
 
 **Where is my XML sitemap?**
 

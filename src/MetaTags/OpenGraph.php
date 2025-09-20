@@ -1,6 +1,8 @@
 <?php
 namespace SlimSEO\MetaTags;
 
+use SlimSEO\Helpers\Option;
+
 class OpenGraph {
 	private $title;
 	private $description;
@@ -14,11 +16,11 @@ class OpenGraph {
 		$this->image_obj   = new Image( 'facebook_image' );
 	}
 
-	public function setup() {
-		add_action( 'wp_head', [ $this, 'output' ] );
+	public function setup(): void {
+		add_action( 'slim_seo_head', [ $this, 'output' ] );
 	}
 
-	public function output() {
+	public function output(): void {
 		$properties = apply_filters( 'slim_seo_open_graph_tags', [
 			'og:title',
 			'og:type',
@@ -50,12 +52,12 @@ class OpenGraph {
 		}
 	}
 
-	private function get_title() {
+	private function get_title(): string {
 		return $this->title->get_title();
 	}
 
-	private function get_type() {
-		return is_singular() ? 'article' : 'website';
+	private function get_type(): string {
+		return is_singular() && ! is_front_page() ? 'article' : 'website';
 	}
 
 	private function get_image() {
@@ -79,65 +81,64 @@ class OpenGraph {
 		return $image[ $key ] ?? null;
 	}
 
-	private function get_default_image() : array {
-		$data = get_option( 'slim_seo' );
-		return empty( $data['default_facebook_image'] ) ? [] : $this->image_obj->get_data_from_url( $data['default_facebook_image'] );
+	private function get_default_image(): array {
+		$url = Option::get( 'default_facebook_image', '' );
+		return $url ? $this->image_obj->get_data_from_url( $url ) : [];
 	}
 
-	private function get_description() {
+	private function get_description(): string {
 		return $this->description->get_description();
 	}
 
-	private function get_url() {
+	private function get_url(): string {
 		return $this->url->get_url();
 	}
 
-	private function get_locale() {
+	private function get_locale(): string {
 		return get_locale();
 	}
 
-	private function get_site_name() {
+	private function get_site_name(): string {
 		return get_bloginfo( 'name' );
 	}
 
-	private function get_article_published_time() {
-		return is_singular() ? gmdate( 'c', strtotime( get_queried_object()->post_date_gmt ) ) : null;
+	private function get_article_published_time(): string {
+		return is_singular() && ! is_front_page() ? wp_date( 'c', strtotime( get_queried_object()->post_date_gmt ) ) : '';
 	}
 
-	private function get_article_modified_time() {
-		return is_singular() ? gmdate( 'c', strtotime( get_queried_object()->post_modified_gmt ) ) : null;
+	private function get_article_modified_time(): string {
+		return is_singular() && ! is_front_page() ? wp_date( 'c', strtotime( get_queried_object()->post_modified_gmt ) ) : '';
 	}
 
-	private function get_updated_time() {
+	private function get_updated_time(): string {
 		return $this->get_article_modified_time();
 	}
 
-	private function get_article_section() {
+	private function get_article_section(): string {
 		if ( ! is_single() || 'post' !== get_post_type() ) {
-			return null;
+			return '';
 		}
 		$categories = get_the_category();
 		if ( empty( $categories ) ) {
-			return null;
+			return '';
 		}
 		$category = reset( $categories );
 		return $category->name;
 	}
 
-	private function get_article_tag() {
+	private function get_article_tag(): array {
 		if ( ! is_single() || 'post' !== get_post_type() ) {
-			return null;
+			return [];
 		}
 		$tags = get_the_tags();
-		return is_array( $tags ) ? wp_list_pluck( $tags, 'name' ) : null;
+		return is_array( $tags ) ? wp_list_pluck( $tags, 'name' ) : [];
 	}
 
-	private function get_app_id() {
-		$data = get_option( 'slim_seo' );
-		return empty( $data['facebook_app_id'] ) ? null : $data['facebook_app_id'];
+	private function get_app_id(): string {
+		return Option::get( 'facebook_app_id', '' );
 	}
 
-	private function output_tag( $property, $content ) {
+	private function output_tag( string $property, $content ) {
 		if ( ! $content ) {
 			return;
 		}

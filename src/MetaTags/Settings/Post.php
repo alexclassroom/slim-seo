@@ -1,45 +1,59 @@
 <?php
 namespace SlimSEO\MetaTags\Settings;
 
+use SlimSEO\Helpers\Data;
+
 class Post extends Base {
-	public function setup() {
+	public function setup(): void {
 		$this->object_type = 'post';
 		add_action( 'admin_print_styles-post.php', [ $this, 'enqueue' ] );
 		add_action( 'admin_print_styles-post-new.php', [ $this, 'enqueue' ] );
-		add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
+		add_filter( 'slim_seo_meta_box_tabs', [ $this, 'tabs' ], 10 );
+		add_filter( 'slim_seo_meta_box_panels', [ $this, 'panels' ], 10 );
+		add_action( 'slim_seo_meta_box_content', [ $this, 'content' ], 10 );
 		add_action( 'save_post', [ $this, 'save' ] );
 	}
 
-	protected function get_script_params() : array {
-		$params = parent::get_script_params();
+	public function enqueue(): void {
+		$post_types = $this->get_types();
+		$screen     = get_current_screen();
 
-		// @codingStandardsIgnoreLine.
-		$is_home = 'page' === get_option( 'show_on_front' ) && $this->get_object_id() == get_option( 'page_on_front' );
-		$params['isHome'] = $is_home;
-
-		if ( $is_home ) {
-			$params['title']['parts'] = apply_filters( 'slim_seo_title_parts', [ 'site', 'tagline' ], 'home' );
+		if ( in_array( $screen->post_type, $post_types, true ) ) {
+			parent::enqueue();
 		}
-
-		return $params;
 	}
 
-	public function add_meta_box() {
-		$context  = apply_filters( 'slim_seo_meta_box_context', 'normal' );
-		$priority = apply_filters( 'slim_seo_meta_box_priority', 'high' );
+	public function tabs( array $tabs ): array {
+		$tabs['general'] = esc_html__( 'General', 'slim-seo' );
 
-		$post_types = $this->get_types();
-		foreach ( $post_types as $post_type ) {
-			add_meta_box( 'slim-seo', __( 'Search Engine Optimization', 'slim-seo' ), [ $this, 'render' ], $post_type, $context, $priority );
-		}
+		return $tabs;
+	}
+
+	public function content(): void {
+		wp_nonce_field( 'save', 'ss_nonce' );
+		?>
+
+		<div id="ss-single"></div>
+
+		<?php
+	}
+
+	public function panels( array $panels ): array {
+		ob_start();
+		?>
+
+		<div id="general" class="ss-tab-pane">
+			<?php $this->content(); ?>
+		</div>
+
+		<?php
+		$panels['general'] = ob_get_clean();
+
+		return $panels;
 	}
 
 	public function get_types() {
-		$post_types = get_post_types( [ 'public' => true ] );
-		unset( $post_types['attachment'] );
-		$post_types = apply_filters( 'slim_seo_meta_box_post_types', $post_types );
-
-		return $post_types;
+		return Data::get_meta_box_post_types();
 	}
 
 	protected function get_object_id() {

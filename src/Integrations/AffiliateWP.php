@@ -2,18 +2,18 @@
 namespace SlimSEO\Integrations;
 
 class AffiliateWP {
+	public function is_active(): bool {
+		return class_exists( 'Affiliate_WP' );
+	}
+
 	public function setup() {
 		add_action( 'template_redirect', [ $this, 'process' ] );
 	}
 
 	public function process() {
-		if ( ! class_exists( 'Affiliate_WP' ) ) {
-			return;
-		}
-
 		// Do not generate meta description from the affiliate area page's content, because it contains forms.
 		if ( is_page( affwp_get_affiliate_area_page_id() ) ) {
-			add_filter( 'slim_seo_meta_description_generated', '__return_empty_string' );
+			add_filter( 'slim_seo_post_content', '__return_empty_string' );
 		}
 
 		add_filter( 'slim_seo_skipped_shortcodes', [ $this, 'skip_shortcodes' ] );

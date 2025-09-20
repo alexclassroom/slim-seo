@@ -1,6 +1,7 @@
 <?php
 namespace SlimSEO\Redirection;
 
+use SlimSEO\Helpers\Assets;
 use SlimSEO\Redirection\Database\Log404 as DbLog;
 
 class Settings {
@@ -15,28 +16,23 @@ class Settings {
 		add_filter( 'slim_seo_option', [ $this, 'option_saved' ], 10, 2 );
 	}
 
-	public function add_tab( array $tabs ) : array {
+	public function add_tab( array $tabs ): array {
 		$tabs['redirection'] = __( 'Redirection', 'slim-seo' );
 		return $tabs;
 	}
 
-	public function add_pane( array $panes ) : array {
+	public function add_pane( array $panes ): array {
 		$panes['redirection'] = '<div id="redirection" class="ss-tab-pane"><div id="ss-redirection"></div></div>';
 
 		return $panes;
 	}
 
 	public function enqueue() {
-		wp_enqueue_style( 'slim-seo-react-tabs', SLIM_SEO_URL . 'css/react-tabs.css', [], filemtime( SLIM_SEO_DIR . '/css/react-tabs.css' ) );
-		wp_enqueue_style( 'slim-seo-redirection', SLIM_SEO_URL . 'css/redirection.css', [ 'wp-components' ], filemtime( SLIM_SEO_DIR . 'css/redirection.css' ) );
-
-		wp_enqueue_script( 'slim-seo-redirection', SLIM_SEO_URL . 'js/redirection.js', [ 'wp-element', 'wp-components', 'wp-i18n' ], filemtime( SLIM_SEO_DIR . 'js/redirection.js' ), true );
-
-		wp_set_script_translations( 'slim-seo-redirection', 'slim-seo', SLIM_SEO_DIR . 'languages/' );
-
 		$this->db_log->create_table();
 
-		$localized_data = [
+		wp_enqueue_style( 'slim-seo-redirection', SLIM_SEO_URL . 'css/redirection.css', [ 'wp-components' ], filemtime( SLIM_SEO_DIR . 'css/redirection.css' ) );
+
+		Assets::enqueue_build_js( 'redirection', 'SSRedirection', [
 			'rest'               => untrailingslashit( rest_url() ),
 			'nonce'              => wp_create_nonce( 'wp_rest' ),
 			'homeURL'            => untrailingslashit( home_url() ),
@@ -44,6 +40,7 @@ class Settings {
 			'settings'           => self::list(),
 			'redirectTypes'      => Helper::redirect_types(),
 			'conditionOptions'   => Helper::condition_options(),
+			'csvSampleData'      => Helper::csv_sample_data(),
 			'isLog404TableExist' => $this->db_log->table_exists(),
 			'permalinkUrl'       => admin_url( 'options-permalink.php' ),
 			'defaultRedirect'    => [
@@ -56,15 +53,13 @@ class Settings {
 				'enable'           => 1,
 				'ignoreParameters' => 0,
 			],
-		];
-
-		wp_localize_script( 'slim-seo-redirection', 'SSRedirection', $localized_data );
+		] );
 
 		do_action( 'slim_seo_redirection_enqueue' );
 		do_action( 'slim_seo_redirection_enqueue_settings' );
 	}
 
-	public function option_saved( array $option, array $data ) : array {
+	public function option_saved( array $option, array $data ): array {
 		$checkboxes = [
 			'force_trailing_slash',
 			'auto_redirection',
@@ -85,7 +80,7 @@ class Settings {
 		return $option;
 	}
 
-	public static function list() : array {
+	public static function list(): array {
 		$saved_settings = get_option( 'slim_seo' ) ?: [];
 		$settings       = [
 			'force_trailing_slash' => 0,

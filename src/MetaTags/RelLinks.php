@@ -1,11 +1,13 @@
 <?php
 namespace SlimSEO\MetaTags;
 
+defined( 'ABSPATH' ) || die;
+
 class RelLinks {
 	use Context;
 
 	public function setup() {
-		add_action( 'wp_head', [ $this, 'output' ] );
+		add_action( 'slim_seo_head', [ $this, 'output' ] );
 	}
 
 	public function output() {
@@ -16,10 +18,10 @@ class RelLinks {
 
 		$links = $this->get_links();
 		if ( isset( $links['next'] ) ) {
-			echo '<link rel="next" href="', esc_url( $links['next'] ), '" />', "\n";
+			echo '<link rel="next" href="', esc_url( $links['next'] ), '">', "\n";
 		}
 		if ( isset( $links['prev'] ) ) {
-			echo '<link rel="prev" href="', esc_url( $links['prev'] ), '" />', "\n";
+			echo '<link rel="prev" href="', esc_url( $links['prev'] ), '">', "\n";
 		}
 	}
 
@@ -56,7 +58,8 @@ class RelLinks {
 	}
 
 	private function get_term_value(): string {
-		return get_term_link( $this->get_queried_object() );
+		$term_link = get_term_link( $this->get_queried_object() );
+		return is_string( $term_link ) ? $term_link : '';
 	}
 
 	private function get_post_type_archive_value(): string {

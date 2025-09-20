@@ -1,6 +1,6 @@
 import { RawHTML, useReducer, useState } from '@wordpress/element';
-import { sprintf, __ } from '@wordpress/i18n';
-import { Tooltip } from '../helper/misc';
+import { __, sprintf } from '@wordpress/i18n';
+import { Tooltip, fetcher } from '../helper/misc';
 
 const Settings = () => {
 	const { settings, settingsName } = SSRedirection;
@@ -12,6 +12,20 @@ const Settings = () => {
 	const [ deleteLog404Table, toggleDeleteLog404Table ] = useReducer( onOrOff => !onOrOff, false );
 	const [ redirect404To, setRedirect404To ] = useState( settings[ 'redirect_404_to' ] );
 	const [ redirect404ToURL, setRedirect404ToURL ] = useState( settings[ 'redirect_404_to_url' ] );
+
+	const deleteAllRedirects = e => {
+		e.preventDefault();
+
+		if ( ! confirm( __( 'Are you sure to delete all redirects?', 'slim-seo' ) ) ) {
+			return;
+		}
+
+		fetcher( 'delete_redirects', { ids: 'all' }, 'POST' ).then( result => {
+			if ( result ) {
+				location.reload();
+			}
+		} );
+	};
 
 	return (
 		<>
@@ -62,7 +76,7 @@ const Settings = () => {
 						<td>
 							<select id='ss-redirect-www' name={ `${ settingsName }[redirect_www]` } value={ redirectWWW } onChange={ e => setRedirectWWW( prev => e.target.value ) }>
 								<option value=''>{ __( 'Do nothing', 'slim-seo' ) }</option>
-								<option value='www-to-non'>{ __( 'www to non-wwww', 'slim-seo' ) }</option>
+								<option value='www-to-non'>{ __( 'www to non-www', 'slim-seo' ) }</option>
 								<option value='non-to-www'>{ __( 'non-www to www', 'slim-seo' ) }</option>
 							</select>
 						</td>
@@ -129,6 +143,15 @@ const Settings = () => {
 								'custom' === redirect404To
 								&& <input type='text' className='regular-text' name={ `${ settingsName }[redirect_404_to_url]` } value={ redirect404ToURL } onChange={ e => setRedirect404ToURL( e.target.value.trim() ) } />
 							}
+						</td>
+					</tr>
+
+					<tr>
+						<th scope="row">
+							<label htmlFor="ss-delete-all-redirects">{ __( 'Delete all redirects', 'slim-seo' ) }</label>
+						</th>
+						<td>
+							<button id="ss-delete-all-redirects" className='button button-link-delete' onClick={ deleteAllRedirects }>{ __( 'Delete', 'slim-seo' ) }</button>
 						</td>
 					</tr>
 				</tbody>

@@ -1,6 +1,8 @@
 <?php
 namespace SlimSEO\MetaTags;
 
+use SlimSEO\Helpers\Option;
+
 class TwitterCards {
 	private $image_obj;
 
@@ -8,8 +10,8 @@ class TwitterCards {
 		$this->image_obj = new Image( 'twitter_image' );
 	}
 
-	public function setup() {
-		add_action( 'wp_head', [ $this, 'output' ] );
+	public function setup(): void {
+		add_action( 'slim_seo_head', [ $this, 'output' ] );
 	}
 
 	/**
@@ -17,30 +19,30 @@ class TwitterCards {
 	 *
 	 * @link https://developer.twitter.com/en/docs/tweets/optimize-with-cards/guides/getting-started
 	 */
-	public function output() {
-		echo '<meta name="twitter:card" content="summary_large_image">', "\n";
+	public function output(): void {
+		$type = apply_filters( 'slim_seo_twitter_card_type', 'summary_large_image' );
+		echo '<meta name="twitter:card" content="', esc_attr( $type ), '">', "\n";
 
 		$image = $this->image_obj->get_value() ?: $this->get_default_image();
 		$image = $image['src'] ?? '';
 		$image = apply_filters( 'slim_seo_twitter_card_image', $image );
 		if ( ! empty( $image ) ) {
-			echo '<meta name="twitter:image" content="' . esc_url( $image ) . '">', "\n";
+			echo '<meta name="twitter:image" content="', esc_url( $image ), '">', "\n";
 		}
 
 		$site = $this->get_site();
 		$site = apply_filters( 'slim_seo_twitter_card_site', $site );
 		if ( $site ) {
-			echo '<meta name="twitter:site" content="' . esc_attr( $site ) . '">', "\n";
+			echo '<meta name="twitter:site" content="', esc_attr( $site ), '">', "\n";
 		}
 	}
 
-	private function get_default_image() : array {
-		$data = get_option( 'slim_seo' );
-		return empty( $data['default_twitter_image'] ) ? [] : $this->image_obj->get_data_from_url( $data['default_twitter_image'] );
+	private function get_default_image(): array {
+		$url = Option::get( 'default_twitter_image', '' );
+		return $url ? $this->image_obj->get_data_from_url( $url ) : [];
 	}
 
-	private function get_site() : string {
-		$data = get_option( 'slim_seo', [] );
-		return $data['twitter_site'] ?? '';
+	private function get_site(): string {
+		return Option::get( 'twitter_site', '' );
 	}
 }

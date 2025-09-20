@@ -1,7 +1,7 @@
 <?php
 namespace SlimSEO\MetaTags\AdminColumns;
 
-use SlimSEO\MetaTags\Helper;
+use SlimSEO\Helpers\UI;
 
 class Post extends Base {
 	protected $object_type = 'post';
@@ -19,20 +19,23 @@ class Post extends Base {
 	 * Render the column.
 	 * The value of meta tags will be applied with filters to make them work in the back end.
 	 */
-	public function render( $column, $post_id ) {
+	public function render( $column, $post_id ): void {
+		$post_id = (int) $post_id;
+
 		switch ( $column ) {
 			case 'meta_title':
-				$title = $this->title->get_singular_value( $post_id );
-				$title = apply_filters( 'slim_seo_meta_title', $title, $post_id );
-				$title = Helper::normalize( $title );
-				echo '<div class="ss-tooltip" data-tippy-content="', esc_attr( $title ), '"><span class="ss-meta-content">', esc_html( $title ), '</span></div>';
+				$title = $this->title->get_rendered_singular_value( $post_id );
+				if ( $this->title->check_is_manual() ) {
+					UI::tooltip( __( 'Manual title', 'slim-seo' ), $this->manual_indicator, 'top' );
+				}
+				UI::tooltip( $title, "<span class='ss-meta-content'>$title</span>", 'top' );
 				break;
 			case 'meta_description':
-				$data        = get_post_meta( $post_id, 'slim_seo', true ) ?: [];
-				$description = $data['description'] ?? '';
-				$description = apply_filters( 'slim_seo_meta_description', $description, $post_id );
-				$description = Helper::normalize( $description );
-				echo '<div class="ss-tooltip" data-tippy-content="', esc_attr( $description ), '"><span class="ss-meta-content">', esc_html( $description ), '</span></div>';
+				$description = $this->description->get_rendered_singular_value( $post_id );
+				if ( $this->description->check_is_manual() ) {
+					UI::tooltip( __( 'Manual description', 'slim-seo' ), $this->manual_indicator, 'top' );
+				}
+				UI::tooltip( $description, "<span class='ss-meta-content'>$description</span>", 'top' );
 				break;
 			case 'index':
 				$noindex = $this->robots->get_singular_value( $post_id );

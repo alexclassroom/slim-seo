@@ -1,17 +1,22 @@
 <?php
 namespace SlimSEO\Sitemaps;
 
+use SlimSEO\Helpers\Data;
+use SlimSEO\Helpers\Images;
+use WP_Post;
+
 class PostType {
 	private $post_type;
 	private $page;
-	private $current_post;
+	private $doc;
+	private $post_images = [];
 
-	public function __construct( $post_type, $page = 1 ) {
+	public function __construct( string $post_type, int $page = 1 ) {
 		$this->post_type = $post_type;
 		$this->page      = $page;
 	}
 
-	public static function get_query_args( $args = [] ) {
+	public static function get_query_args( array $args = [] ): array {
 		return apply_filters( 'slim_seo_sitemap_post_type_query_args', array_merge( [
 			'post_status'            => 'publish',
 			'has_password'           => false,
@@ -19,20 +24,23 @@ class PostType {
 			'ignore_sticky_posts'    => true,
 
 			'no_found_rows'          => true,
-			'update_post_meta_cache' => false,
 			'update_post_term_cache' => false,
 
 			'order'                  => 'DESC',
 			'orderyby'               => 'date',
 
-			'posts_per_page'         => 2000, // @codingStandardsIgnoreLine.
+			// Set 1000 to compatible with News sitemap structure.
+			'posts_per_page'         => 1000, // @codingStandardsIgnoreLine.
 		], $args ), $args );
 	}
 
-	public function output() {
-		echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:xhtml="http://www.w3.org/1999/xhtml">', "\n";
+	public function output(): void {
+		echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">', "\n";
 
-		$this->output_homepage();
+		if ( $this->page === 1 ) {
+			$this->output_homepage();
+			$this->output_post_type_archive();
+		}
 
 		$query_args = self::get_query_args( [
 			'post_type' => $this->post_type,
@@ -40,21 +48,23 @@ class PostType {
 		] );
 		$query      = new \WP_Query( $query_args );
 
+		$this->get_and_cache_images( $query->posts );
+
 		foreach ( $query->posts as $post ) {
 			if ( ! $this->is_indexed( $post ) ) {
 				continue;
 			}
 
-			$this->current_post = $post;
+			if ( apply_filters( 'slim_seo_sitemap_post_ignore', false, $post ) ) {
+				continue;
+			}
 
 			echo "\t<url>\n";
 			echo "\t\t<loc>", esc_url( get_permalink( $post ) ), "</loc>\n";
-			echo "\t\t<lastmod>", esc_html( gmdate( 'c', strtotime( $post->post_modified_gmt ) ) ), "</lastmod>\n";
+			echo "\t\t<lastmod>", esc_html( wp_date( 'c', strtotime( $post->post_modified_gmt ) ) ), "</lastmod>\n";
 
-			$images = $this->get_post_images( $post );
-			array_walk( $images, [ $this, 'normalize_image' ] );
-			$images = array_filter( $images );
-			array_walk( $images, [ $this, 'output_image' ] );
+			$this->output_news( $post );
+			$this->output_images( $post );
 
 			do_action( 'slim_seo_sitemap_post', $post );
 			echo "\t</url>\n";
@@ -63,7 +73,7 @@ class PostType {
 		echo '</urlset>';
 	}
 
-	private function output_homepage() {
+	private function output_homepage(): void {
 		if ( 'page' !== $this->post_type || 'posts' !== get_option( 'show_on_front' ) ) {
 			return;
 		}
@@ -72,130 +82,139 @@ class PostType {
 		echo "\t</url>\n";
 	}
 
-	private function output_image( $image ) {
-		if ( empty( $image['url'] ) ) {
+	private function output_post_type_archive(): void {
+		// Ignore post as it's always the homepage or blog page, which are already included in the "page" sitemap.
+		if ( $this->post_type === 'post' ) {
 			return;
 		}
-		echo "\t\t<image:image>\n";
-		echo "\t\t\t<image:loc>", esc_url( $this->get_absolute_url( $image['url'] ) ), "</image:loc>\n";
-		echo "\t\t</image:image>\n";
+
+		// If post type archive is a page, ignore it because it's already included in the "page" sitemap.
+		$archive_page = Data::get_post_type_archive_page( $this->post_type );
+		if ( $archive_page ) {
+			return;
+		}
+
+		$url = get_post_type_archive_link( $this->post_type );
+		if ( ! $url ) {
+			return;
+		}
+		echo "\t<url>\n";
+		echo "\t\t<loc>", esc_url( $url ), "</loc>\n";
+		echo "\t</url>\n";
 	}
 
-	private function normalize_image( &$image ) {
-		if ( is_array( $image ) ) {
+	private function get_and_cache_images( array $posts ): void {
+		if ( ! $this->is_enabled_image() ) {
 			return;
 		}
+		$image_ids = [];
 
-		// If we get image URL only.
-		if ( ! is_numeric( $image ) ) {
-			$image = [ 'url' => $image ];
-			return;
-		}
-
-		// Ignore if image is deleted.
-		if ( ! get_attached_file( $image ) ) {
-			$image = null;
-			return;
-		}
-
-		$info       = wp_get_attachment_image_src( $image, 'full' );
-		$attachment = get_post( $image );
-
-		$caption = $attachment->post_excerpt;
-		if ( empty( $caption ) ) {
-			$caption = get_post_meta( $image, '_wp_attachment_image_alt', true );
-		}
-
-		$image = array_filter( [
-			'url'     => $info[0],
-			'title'   => $attachment->post_title,
-			'caption' => $caption,
-		] );
-	}
-
-	private function get_post_images( $post ) {
-		$images = [];
-
-		// Post thumbnail.
-		$images[] = get_post_thumbnail_id( $post );
-
-		// Get images from post content.
-		$images = array_merge( $images, $this->get_images_from_html( $post->post_content ) );
-
-		return array_filter( $images );
-	}
-
-	private function get_images_from_html( $html ) {
-		// Use DOMDocument instead of SimpleXML to load non-well-formed HTML.
-		if ( ! class_exists( 'DOMDocument' ) ) {
-			return [];
-		}
-
-		// Set encoding.
-		$html = '<?xml encoding="' . get_bloginfo( 'charset' ) . '"?>' . $html;
-
-		// Do not generate a notice when there's an error.
-		libxml_use_internal_errors( true );
-
-		$doc = new \DOMDocument( $html );
-		$doc->loadHTML( $html );
-
-		// Clear the errors to clean up the memory.
-		libxml_clear_errors();
-
-		$values = [];
-		$images = $doc->getElementsByTagName( 'img' );
-		foreach ( $images as $image ) {
-			$src = $image->getAttribute( 'src' );
-			if ( empty( $src ) ) {
+		// Cache images by IDs.
+		foreach ( $posts as $post ) {
+			if ( ! $this->is_indexed( $post ) ) {
 				continue;
 			}
 
-			$class = $image->getAttribute( 'class' );
-
-			// Uploaded images.
-			if ( preg_match( '/wp-image-(\d+)/', $class, $matches ) && get_attached_file( $matches[1] ) ) {
-				$values[] = (int) $matches[1];
-				continue;
-			}
-
-			if ( $this->is_external( $src ) ) {
-				continue;
-			}
-
-			$values[] = [
-				'url'     => $src,
-				'title'   => $image->getAttribute( 'title' ),
-				'caption' => $image->getAttribute( 'alt' ),
-			];
+			$images                         = Images::get_post_images( $post );
+			$this->post_images[ $post->ID ] = $images;
+			$images                         = array_filter( $images, function ( $image ): bool {
+				return is_numeric( $image );
+			} );
+			$image_ids                      = array_merge( $image_ids, $images );
 		}
-
-		return $values;
+		$this->cache_images( $image_ids );
 	}
 
-	private function is_external( string $url ): bool {
+	private function output_images( WP_Post $post ): void {
+		$images = $this->post_images[ $post->ID ] ?? [];
+		foreach ( $images as &$image ) {
+			$image = is_string( $image ) ? $image : wp_get_attachment_url( $image );
+			if ( ! $this->is_internal( $image ) ) {
+				continue;
+			}
+			echo "\t\t<image:image>\n";
+			echo "\t\t\t<image:loc>", esc_url( $image ), "</image:loc>\n";
+			echo "\t\t</image:image>\n";
+		}
+	}
+
+	private function output_news( WP_Post $post ): void {
+		// News sitemap for posts published within 2 days only.
+		if ( ! $this->is_enabled_news() || ! $this->is_published_within_2days( $post ) ) {
+			return;
+		}
+
+		echo "\t\t<news:news>\n";
+		echo "\t\t\t<news:publication>\n";
+		echo "\t\t\t\t<news:name>", esc_html( get_bloginfo( 'name' ) ), "</news:name>\n";
+		echo "\t\t\t\t<news:language>", esc_html( $this->get_site_language() ), "</news:language>\n";
+		echo "\t\t\t</news:publication>\n";
+		echo "\t\t\t<news:publication_date>", esc_html( wp_date( 'c', strtotime( $post->post_date_gmt ) ) ), "</news:publication_date>\n";
+		echo "\t\t\t<news:title>", esc_html( $post->post_title ), "</news:title>\n";
+		echo "\t\t</news:news>\n";
+	}
+
+	private function is_internal( string $url ): bool {
 		$home_url = untrailingslashit( home_url() );
-		return strpos( $url, $home_url ) === false;
+		return str_contains( $url, $home_url );
 	}
 
-	private function get_absolute_url( $url ) {
-		if ( wp_parse_url( $url, PHP_URL_SCHEME ) ) {
-			return $url;
-		}
-
-		$url_parts = wp_parse_url( home_url() );
-
-		// Non-protocol URL.
-		if ( 0 === strpos( $url, '//' ) ) {
-			return "{$url_parts['scheme']}:{$url}";
-		}
-
-		// Relative URL.
-		return $url_parts['scheme'] . '://' . trailingslashit( $url_parts['host'] ) . ltrim( $url, '/' );
-	}
-
-	private function is_indexed( $post ) {
+	private function is_indexed( WP_Post $post ): bool {
 		$data = get_post_meta( $post->ID, 'slim_seo', true );
 		return empty( $data['noindex'] );
+	}
+
+	private function cache_images( array $image_ids ): void {
+		update_meta_cache( 'post', $image_ids );
+		$this->cache_posts( $image_ids );
+	}
+
+	private function cache_posts( array $post_ids ): void {
+		if ( empty( $post_ids ) ) {
+			return;
+		}
+
+		$post_ids = implode( ',', $post_ids );
+
+		global $wpdb;
+		$sql = "SELECT * FROM $wpdb->posts WHERE ID IN ($post_ids)";
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$posts = $wpdb->get_results( $sql );
+
+		foreach ( $posts as $post ) {
+			$post = sanitize_post( $post, 'raw' );
+			wp_cache_add( $post->ID, $post, 'posts' );
+		}
+	}
+
+	private function is_published_within_2days( WP_Post $post ): bool {
+		$timestamp             = strtotime( $post->post_date_gmt );
+		$two_days_ago_midnight = strtotime( '-2 days midnight', strtotime( gmdate( 'Y-m-d' ) ) );
+
+		return $timestamp >= $two_days_ago_midnight;
+	}
+
+	private function get_site_language(): string {
+		$locale = get_locale();
+		$locale = str_replace( [ '-', '_' ], '-', strtolower( $locale ) );
+
+		// Exception: For Simplified Chinese, use zh-cn and for Traditional Chinese, use zh-tw.
+		if ( in_array( $locale, [ 'zh-cn', 'zh-tw' ], true ) ) {
+			return $locale;
+		}
+
+		return explode( '-', $locale )[0];
+	}
+
+	private function is_enabled_news(): bool {
+		if ( 'post' !== $this->post_type ) {
+			return false;
+		}
+		return apply_filters( 'slim_seo_sitemap_news', true );
+	}
+
+	private function is_enabled_image(): bool {
+		return apply_filters( 'slim_seo_sitemap_image', true );
 	}
 }

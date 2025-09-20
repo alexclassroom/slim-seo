@@ -13,6 +13,7 @@ abstract class Base {
 	protected $robots;
 	protected $object_type;
 	protected $types;
+	protected $manual_indicator = '<span class="ss-manual-content"></span>';
 
 	public function __construct( Settings $settings, Title $title, Description $description, Robots $robots ) {
 		$this->settings    = $settings;
@@ -28,6 +29,8 @@ abstract class Base {
 	public function setup_admin() {
 		$this->types = $this->settings->get_types();
 
+		$this->types = apply_filters( "slim_seo_admin_columns_{$this->object_type}", $this->types );
+
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue' ] );
 
 		// Quick edit.
@@ -36,7 +39,7 @@ abstract class Base {
 
 		// Bulk edit.
 		add_action( 'bulk_edit_custom_box', [ $this, 'output_bulk_edit_fields' ] );
-		add_action( "wp_ajax_ss_save_bulk_{$this->object_type}", [ $this, 'save_bulk_edit' ] );
+		add_action( 'bulk_edit_posts', [ $this, 'save_bulk_edit' ], 10, 2 );
 	}
 
 	public function enqueue() {
@@ -44,10 +47,8 @@ abstract class Base {
 			return;
 		}
 
-		wp_register_script( 'tippy', 'https://cdn.jsdelivr.net/combine/npm/@popperjs/core@2.11.2/dist/umd/popper.min.js,npm/tippy.js@6.3.7/dist/tippy-bundle.umd.min.js', [], '6.3.7', true );
-
 		wp_enqueue_style( 'slim-seo-admin-columns', SLIM_SEO_URL . 'css/admin-columns.css', [], filemtime( SLIM_SEO_DIR . 'css/admin-columns.css' ) );
-		wp_enqueue_script( 'slim-seo-admin-columns', SLIM_SEO_URL . 'js/admin-columns.js', [ 'tippy' ], filemtime( SLIM_SEO_DIR . 'js/admin-columns.js' ), true );
+		wp_enqueue_script( 'slim-seo-admin-columns', SLIM_SEO_URL . 'js/admin-columns.js', [], filemtime( SLIM_SEO_DIR . 'js/admin-columns.js' ), true );
 		wp_add_inline_script( 'slim-seo-admin-columns', "let ssObjectType = '{$this->object_type}'", 'before' );
 	}
 
@@ -142,37 +143,29 @@ abstract class Base {
 		wp_send_json_success( $data );
 	}
 
-	public function save_bulk_edit() {
-		check_ajax_referer( 'save', 'nonce' );
-
-		$ids = wp_parse_id_list( wp_unslash( $_GET['ids'] ?? '' ) );
-		if ( empty( $ids ) || ! isset( $_GET['noindex'] ) ) {
-			wp_send_json_error();
+	public function save_bulk_edit( $updated, $shared_post_data ) {
+		if ( empty( $updated ) || ! isset( $shared_post_data['noindex'] ) ) {
+			return;
 		}
 
-		$noindex = (int) $_GET['noindex'];
-		if ( ! in_array( $noindex, [ -1, 0, 1 ], true ) ) {
-			wp_send_json_error();
+		$noindex = (int) $shared_post_data['noindex'];
+		if ( ! in_array( $noindex, [ -1, 0, 1 ], true ) || $noindex === -1 ) {
+			return;
 		}
 
-		// Not changed.
-		if ( $noindex === -1 ) {
-			wp_send_json_success();
-		}
-
-		foreach ( $ids as $id ) {
+		foreach ( $updated as $id ) {
 			$data            = get_metadata( $this->object_type, $id, 'slim_seo', true ) ?: [];
 			$data['noindex'] = $noindex;
 
 			$data = array_filter( $data );
+
 			if ( empty( $data ) ) {
 				delete_metadata( $this->object_type, $id, 'slim_seo' );
 			} else {
 				update_metadata( $this->object_type, $id, 'slim_seo', $data );
 			}
 		}
-		wp_send_json_success();
 	}
 
-	abstract protected function is_screen() : bool;
+	abstract protected function is_screen(): bool;
 }

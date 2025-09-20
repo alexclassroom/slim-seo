@@ -34,6 +34,9 @@
 	<exclude-pattern>/tests/*</exclude-pattern>
 	<exclude-pattern>/.github/*</exclude-pattern>
 	<exclude-pattern>*.min.js</exclude-pattern>
+	<exclude-pattern>node_modules</exclude-pattern>
+	<exclude-pattern>js/build</exclude-pattern>
+	<exclude-pattern>js/breadcrumbbs/dist</exclude-pattern>
 
 
 	<rule ref="WordPress">
@@ -98,6 +101,6 @@
 	USE THE PHPCompatibility RULESET
 	#############################################################################
 	-->
-	<config name="testVersion" value="7.1-"/>
+	<config name="testVersion" value="7.2-"/>
 	<rule ref="PHPCompatibilityWP"/>
 </ruleset>

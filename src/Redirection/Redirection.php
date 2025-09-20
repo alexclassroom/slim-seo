@@ -9,6 +9,7 @@ class Redirection {
 	public function __construct( DbRedirects $db_redirects ) {
 		$this->db_redirects = $db_redirects;
 
+		add_action( 'login_init', [ $this, 'redirect' ], 1 );
 		add_action( 'template_redirect', [ $this, 'redirect' ], 1 );
 		add_action( 'template_redirect', [ $this, 'redirect_www' ], 5 );
 		add_action( 'template_redirect', [ $this, 'auto_redirection' ], 10 );
@@ -22,8 +23,8 @@ class Redirection {
 			return;
 		}
 
-		$http_host   = $_SERVER['HTTP_HOST'] ?? ''; // @codingStandardsIgnoreLine.
-		$request_uri = $_SERVER['REQUEST_URI'] ?? ''; // @codingStandardsIgnoreLine.
+		$http_host   = $_SERVER['HTTP_HOST'] ?? ''; // @phpcs:ignore.
+		$request_uri = rawurldecode( $_SERVER['REQUEST_URI'] ?? '' ); // @phpcs:ignore.
 		$request_url = ( Helper::is_ssl() ? 'https' : 'http' ) . "://{$http_host}{$request_uri}";
 		$request_url = Helper::normalize_url( $request_url );
 		$request_url = strtolower( $request_url );
@@ -40,13 +41,15 @@ class Redirection {
 				$current_url = rtrim( $url_parts[0], '/' );
 			}
 
-			$from            = $redirect['from'];
+			$from            = Helper::normalize_url( $redirect['from'], false );
 			$to              = $redirect['to'];
 			$should_redirect = false;
 
 			switch ( $redirect['condition'] ) {
 				case 'regex':
-					$regex = '/' . preg_quote( $from, '/' ) . '/i';
+					$from  = str_replace( '\/', '/', $from );
+					$from  = str_replace( '/', '\/', $from );
+					$regex = '/' . $from . '/i';
 
 					if ( preg_match( $regex, $current_url ) ) {
 						$to              = preg_replace( $regex, $to, $current_url );
@@ -88,32 +91,19 @@ class Redirection {
 				continue;
 			}
 
-			switch ( $redirect['type'] ) {
-				case 301:
-					header( 'HTTP/1.1 301 Moved Permanently' );
+			// phpcs:ignore
+			$status = (int) $redirect[ 'type' ];
 
-					break;
-				case 302:
-					header( 'HTTP/1.1 302 Found' );
-
-					break;
-				case 307:
-					header( 'HTTP/1.1 307 Temporary Redirect' );
-
-					break;
-				case 410:
-					header( 'HTTP/1.1 410 Content Deleted' );
-
-					break;
-				case 451:
-					header( 'HTTP/1.1 451 Unavailable For Legal Reasons' );
-
-					break;
+			// Don't redirect if 410. Instead return 410 status header.
+			if ( $status === 410 ) {
+				status_header( $status );
+				return;
 			}
 
-			$to = filter_var( $to, FILTER_VALIDATE_URL ) ? $to : home_url( $to );
+			$to = Helper::url_valid( $to ) ? $to : home_url( $to );
 
-			header( 'Location: ' . $to, true, (int) $redirect['type'] );
+			// phpcs:ignore
+			wp_redirect( $to, $status, 'Slim SEO' );
 			exit();
 		}
 	}
@@ -126,13 +116,13 @@ class Redirection {
 		}
 
 		$should_redirect = false;
-		$http_host       = $_SERVER['HTTP_HOST'] ?? ''; // @codingStandardsIgnoreLine.
+		$http_host       = $_SERVER['HTTP_HOST'] ?? ''; // @phpcs:ignore.
 		$http_host       = strtolower( $http_host );
 
-		if ( 'www-to-non' === $redirect_www && false !== stripos( $http_host, 'wwww' ) ) {
+		if ( 'www-to-non' === $redirect_www && str_starts_with( $http_host, 'www.' ) ) {
 			$http_host       = substr( $http_host, 4 );
 			$should_redirect = true;
-		} elseif ( 'non-to-www' === $redirect_www && false === stripos( $http_host, 'wwww' ) ) {
+		} elseif ( 'non-to-www' === $redirect_www && ! str_starts_with( $http_host, 'www.' ) ) {
 			$http_host       = 'www.' . $http_host;
 			$should_redirect = true;
 		}
@@ -208,13 +198,10 @@ class Redirection {
 		$request_url = ( Helper::is_ssl() ? 'https' : 'http' ) . "://{$http_host}{$request_uri}";
 		$request_url = Helper::normalize_url( $request_url );
 		$request_url = strtolower( $request_url );
-		$post_id     = (int) $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT post_id
-				FROM $wpdb->postmeta
-				WHERE meta_key = '_ss_old_permalink' AND meta_value = %s",
-				$request_url
-			)
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$post_id = (int) $wpdb->get_var(
+			$wpdb->prepare( "SELECT post_id FROM $wpdb->postmeta WHERE meta_key = '_ss_old_permalink' AND meta_value = %s", $request_url )
 		);
 
 		if ( empty( $post_id ) ) {
@@ -227,7 +214,7 @@ class Redirection {
 		exit;
 	}
 
-	public function force_trailing_slash( string $url ) : string {
+	public function force_trailing_slash( string $url ): string {
 		if ( ! Settings::get( 'force_trailing_slash' ) ) {
 			return $url;
 		}
